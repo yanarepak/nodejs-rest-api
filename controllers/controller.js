@@ -1,7 +1,8 @@
 const { Contact } = require("../models/contactsModel");
 
-const getContacts = async (reg, res, next) => {
-  const contacts = await Contact.find({});
+const getContacts = async (req, res, next) => {
+  const {id} = req.user;
+  const contacts = await Contact.find({owner: id});
   res.status(200).json({ contacts });
 };
 
@@ -15,7 +16,8 @@ const getContactWithId = async (req, res, next) => {
 };
 
 const createContact = async (req, res) => {
-  const newContact = await Contact.create(req.body);
+  const { id } = req.user;
+  const newContact = await Contact.create({...req.body, owner: id});
   res.status(201).json(newContact);
 };
 
