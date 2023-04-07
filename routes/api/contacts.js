@@ -14,13 +14,19 @@ const {
   contactSchema,
   updateSchema,
   favoriteSchema,
-} = require("../../schemas/joi.schema");
+} = require("../../schemas/contactSchema");
+const authorize = require("../../middlewares/authorize");
 
-router.get("/", controllerWrapper(getContacts));
+router.get("/", authorize, controllerWrapper(getContacts));
 
 router.get("/:contactId", controllerWrapper(getContactWithId));
 
-router.post("/", validation(contactSchema), controllerWrapper(createContact));
+router.post(
+  "/",
+  authorize,
+  validation(contactSchema),
+  controllerWrapper(createContact)
+);
 
 router.delete("/:contactId", controllerWrapper(deleteContact));
 
