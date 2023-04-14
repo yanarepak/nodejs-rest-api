@@ -2,25 +2,27 @@ const { User } = require("../models/usersModel");
 const { Conflict, Unauthorized } = require("http-errors");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const gravatar = require("gravatar");
 require("dotenv").config();
 
 const { SECRET_KEY } = process.env;
 
 const register = async (req, res) => {
   const { name, email, password } = req.body;
-  const newUser = await User.findOne({ email });
+  const user = await User.findOne({ email });
 
-  if (newUser) {
+  if (user) {
     throw new Conflict(`Email in use`);
   }
-
+  const avatarURL = gravatar.url(email);
   const hashPassword = await bcrypt.hash(password, 10);
-  const result = await User.create({ name, email, password: hashPassword });
+  const result = await User.create({ name, email, password: hashPassword, avatarURL });
 
   res.status(201).json({
     user: {
       name: result.name,
       email: result.email,
+      avatarURL,
     },
   });
 };
