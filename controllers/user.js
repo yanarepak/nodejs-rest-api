@@ -1,8 +1,10 @@
 const { User } = require("../models/usersModel");
 const { Unauthorized } = require("http-errors");
+const { sendEmail } = require("../helpers/sendEmail")
 const path = require("path");
 const fs = require("fs/promises");
 const Jimp = require("jimp");
+
 
 const avatarDir = path.join(__dirname, "../", "public", "avatars");
 
@@ -41,4 +43,53 @@ const updateAvatar = async (req, res) => {
   }
 };
 
-module.exports = { getCurrent, updateAvatar };
+const verify = async (req, res) => {
+  const { verificationToken } = req.params;
+  const user = await User.findOne({ verificationToken });
+
+  if (!user) {
+    res.status(404).json({ message: "User not found"})
+  }
+
+  await User.findByIdAndUpdate(user.id, {
+    verify: true,
+    verificationToken: null,
+  });
+  res.status(200).json({ message: "Verification successful" });
+};
+
+const resendEmail = async (req, res) => {
+  const { email } = req.body;
+  if(!email) {
+    return res.status(400).json({ message: "Missing required field email"})
+  }
+
+  const user = await User.findOne({ email });
+
+  if (!user ) {
+    res.status(400).json({ message: "User not found"})
+  }
+
+  if(user.verify){
+    return res.status(400).json({
+      message: "Verification has already been passed"
+    })
+  }
+
+  const data = {
+    to: email,
+    subject: "Verify email",
+    html: `<a target="_blank" http://localhost:3000/api/users/verify/${user.verificationToken}">Verify email</a>`,
+  };
+
+  await sendEmail(data);
+
+  res.status(200).json({
+    massage: "Verification email sent",
+  });
+};
+
+
+
+
+module.exports = { getCurrent, updateAvatar, verify, resendEmail };
